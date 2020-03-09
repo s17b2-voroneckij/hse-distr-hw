@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  server:
+    build: .
+    image: market:latest
+    environment:
+      FLASK_ENV: config.ProductionConfig
+    ports:
+        - "5000:5000"
