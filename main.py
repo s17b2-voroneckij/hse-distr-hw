@@ -1,20 +1,24 @@
 from flask import Flask, request, abort
-from item import *
+import sqlite3
+import json
 app = Flask(__name__)
 
 
 @app.route("/getAll", methods=["GET"])
 def get_all():
     data = request.args
-    return json.dumps(items, cls=ItemEncoder)
+    conn = sqlite3.connect("shop.db")
+    return json.dumps(conn.execute("SELECT * from items ORDER BY id").fetchall())
 
 
 @app.route("/getByID", methods=["GET"])
 def get_by_id():
     data = request.args
     id = int(data['id'])
-    if id in items:
-        return json.dumps(items[id], cls=ItemEncoder)
+    conn = sqlite3.connect("shop.db")
+    result = conn.execute("SELECT * FROM items WHERE id = %d" % id).fetchall()
+    if len(result) == 1:
+        return json.dumps(result[0])
     else:
         abort(404)
 
@@ -22,39 +26,57 @@ def get_by_id():
 @app.route("/addItem", methods=["POST"])
 def add_item():
     data = request.args
+    conn = sqlite3.connect("shop.db")
     id = int(data['id'])
-    if id in items:
-        abort(208)
     name = data['name']
     cat = data['category']
-    items[id] = Item(name, id, cat)
+    if conn.execute("SELECT count(*) from items WHERE id = %d" % id).fetchall()[0][0] >= 1:
+        abort(404)
+    conn.execute("INSERT INTO items VALUES (%d, '%s', '%s')" % (id, name, cat))
+    conn.commit()
+    conn.close()
     return "Added successfully"
 
 
 @app.route("/removeItem", methods=["DELETE"])
 def delete_item():
+    conn = sqlite3.connect("shop.db")
     data = request.args
-    print(data)
     id = int(data['id'])
-    if id not in items:
+    if conn.execute("SELECT count(*) from items WHERE id = %d" % id).fetchall()[0][0] == 0:
         abort(404)
     else:
-        items.pop(id)
+        conn.execute("DELETE FROM items WHERE id = %d" % id)
+        conn.commit()
+        conn.close()
         return "Deleted"
 
 
 @app.route("/editItem", methods=["PUT"])
 def edit_item():
     data = request.args
-    print(data)
     id = int(data['id'])
-    if id not in items:
+    conn = sqlite3.connect("shop.db")
+    if conn.execute("SELECT count(*) from items WHERE id = %d" % id).fetchall()[0][0] == 0:
         abort(404)
     name = data['name']
     cat = data['category']
-    items[id] = Item(name, id, cat)
+    conn.execute("DELETE FROM items WHERE id = %d" % id)
+    conn.execute("INSERT INTO items VALUES (%d, '%s', '%s')" % (id, name, cat))
+    conn.commit()
+    conn.close()
     return "Edited successfully"
 
 
-items = dict()
-app.run(host='0.0.0.0')
+conn = sqlite3.connect("shop.db")
+try:
+    conn.execute("""CREATE TABLE items
+              (id INTEGER, name TEXT, category TEXT)""")
+except sqlite3.OperationalError as err:
+    if err.args[0] == 'table items already exists':
+        pass
+    else:
+        raise err
+
+conn.close()
+app.run()
