@@ -1,4 +1,4 @@
-Дз 1 и 3 по Распределённым вычислениям Воронецкого Димы
+Дз 1, 2, 3 по Распределённым вычислениям Воронецкого Димы
 запуск:
 sudo docker build . -t market && sudo docker-compose up
 
@@ -14,3 +14,5 @@ addItem (POST), принимает строки name и category и число i
 removeItem (DELETE), принимает id и удаляет из базы товар.
 
 editItem (PUT). Аргументы аналогичны addItem
+
+Используется sqlite3 для работы с данными.
