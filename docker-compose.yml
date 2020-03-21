@@ -1,10 +1,22 @@
 version: "3"
 
 services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: server
+      POSTGRES_DB: market
+      POSTGRES_PASSWORD: 123456
+    networks:
+      - shopnet
+      
   server:
     build: .
     image: market:latest
-    environment:
-      FLASK_ENV: config.ProductionConfig
     ports:
         - "5000:5000"
+    networks:
+      - shopnet
+      
+networks:
+  shopnet:
