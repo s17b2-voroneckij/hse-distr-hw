@@ -156,8 +156,6 @@ def edit_item():
 
 
 tokens = set()
-print('preparing to connect')
-time.sleep(10)
 db = psycopg2.connect(dbname='market', user='server',
                         password='123456', host='db')
 SECONDS_IN_DAY = 24 * 60 * 60
